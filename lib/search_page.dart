@@ -12,77 +12,80 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  // String searchUrl =
-  //     "https://api.themoviedb.org/3/search/movie?api_key=a3ca43df787ec6b692b7e1e2d53a65ec&query=";
-  // String imageUrl = "https://image.tmdb.org/t/p/original";
+  var showData = [];
+  int trendPage = 1;
 
-  // Future<List<dynamic>> searchMovies(String query) async {
-  //   final resp = await http.get(Uri.parse(searchUrl + query));
-  //   debugPrint(resp.body);
-  //   return jsonDecode(resp.body);
-  // }
+  Future<void> getMoreData() async {
+    var d = await MovieApi.getTrendMovies(page: trendPage);
+    setState(() {
+      showData.addAll(d);
+      trendPage++;
+    });
+  }
 
-  // Future<List<dynamic>> getTrendMovies() async {
-  //   String trendUrl =
-  //       "https://api.themoviedb.org/3/trending/movie/week?api_key=a3ca43df787ec6b692b7e1e2d53a65ec";
-  //   final resp = await http.get(Uri.parse(trendUrl));
-  //   debugPrint(resp.body);
-  //   return jsonDecode(resp.body)["results"];
-  // }
+  Future initSearch() async {
+    var data = await MovieApi.getTrendMovies();
+    setState(() {
+      showData = data;
+      trendPage++;
+    });
+  }
 
-  // List<dynamic> trendMovies = [];
+  ScrollController c = ScrollController();
+  @override
+  void initState() {
+    initSearch();
 
-  // @override
-  // void initState() async {
-  //   trendMovies = await getTrendMovies();
+    c.addListener(() {
+      if (c.position.maxScrollExtent == c.offset) {
+        getMoreData();
+      }
+    });
+    super.initState();
+  }
 
-  //   super.initState();
-  // }
+  Widget searchListWidget() {
+    if (showData.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    } else {
+      return ListView.builder(
+          key: const PageStorageKey("searchListStorage"),
+          itemCount: showData.length + 1,
+          controller: c,
+          itemBuilder: (context, index) {
+            if (index < showData.length) {
+              debugPrint("${showData.length} $index");
+              return Padding(
+                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 0, 0),
+                  child: SearchMovieCard(searchData: showData[index]));
+            } else {
+              debugPrint("END");
+              return const Center(child: CircularProgressIndicator());
+            }
+          });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // key: scaffoldKey,
       appBar: AppBar(
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.max, children: [
-          TextField(
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: "Hello",
-                hintText: "HINT",
-              ),
-              onSubmitted: (String txt) async {
-                await MovieApi.searchMovies(txt);
-              }),
-          // ListView.builder(itemCount: trendMovies.length,itemBuilder: (BuildContext context, int index) {})
-          const SizedBox(height: 10),
-          FutureBuilder(
-              builder: (ctx, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text("[ERROR] ${snapshot.error}"));
-                  } else if (snapshot.hasData) {
-                    final data = snapshot.data as List<dynamic>;
-
-                    return ListView.builder(
-                        itemCount: 10,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (context, index) {
-                          return Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(8.0, 8.0, 0, 0),
-                              child: SearchMovieCard(searchData: data[index]));
-                        });
-                  }
-                }
-                return const Center(child: CircularProgressIndicator());
-              },
-              future: MovieApi.getTrendMovies())
-        ]),
-      ),
+      body: Column(mainAxisSize: MainAxisSize.max, children: [
+        TextField(
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: "Hello",
+              hintText: "HINT",
+            ),
+            onSubmitted: (String txt) async {
+              await MovieApi.searchMovies(txt);
+            }),
+        const SizedBox(height: 10),
+        Expanded(child: searchListWidget())
+      ]),
     );
   }
 }

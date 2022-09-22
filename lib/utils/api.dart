@@ -10,13 +10,14 @@ class MovieApi {
   static const String searchUrl = "${baseUrl}search/movie?$apiKey&query=";
   static const String imageUrl = "https://image.tmdb.org/t/p/";
 
-  static Future<List<dynamic>> searchMovies(String query) async {
-    final resp = await http.get(Uri.parse(searchUrl + query));
+  static Future<List<dynamic>> searchMovies(String query,
+      {int page = 1}) async {
+    final resp = await http.get(Uri.parse("$searchUrl$query&page=$page"));
     return jsonDecode(resp.body)["results"];
   }
 
-  static Future<List<dynamic>> getTrendMovies() async {
-    String trendUrl = "${baseUrl}trending/movie/week?$apiKey";
+  static Future<List<dynamic>> getTrendMovies({int page = 1}) async {
+    String trendUrl = "${baseUrl}trending/movie/week?$apiKey&page=$page";
     final resp = await http.get(Uri.parse(trendUrl));
     return jsonDecode(resp.body)["results"];
   }
