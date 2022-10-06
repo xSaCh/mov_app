@@ -33,7 +33,8 @@ class MovieApi {
   static const String apiKey = "api_key=a3ca43df787ec6b692b7e1e2d53a65ec";
   static const String baseUrl = "https://api.themoviedb.org/3/";
   static const String imageUrl = "https://image.tmdb.org/t/p/";
-
+  static const String ytImgUrl = "https://img.youtube.com/vi/";
+  static const String vimeoImgUrl = "https://vimeo.com/";
   static const Map<int, Genre> genreList = {
     28: Genre.Action,
     12: Genre.Adventure,
@@ -56,7 +57,7 @@ class MovieApi {
     37: Genre.Western
   };
 
-//Region Utils
+//#Region Utils
   static Genre getGenreFromId(int id) {
     return genreList[id] ?? Genre.Invalid;
   }
@@ -65,13 +66,21 @@ class MovieApi {
     return genreList.keys.firstWhere((k) => genreList[k] == genre);
   }
 
-  static String getImageLink(String url,
+  static String getImageLink(String path,
       {ImageWidth width = ImageWidth.original}) {
-    return imageUrl + width.name + url;
+    return imageUrl + width.name + path;
   }
-//EndRegion
 
-//Region Public Api Calls
+  static String getVideoThumbailLink(Map videoData) {
+    if (videoData["site"] == "YouTube") {
+      return "$ytImgUrl${videoData["key"]}/mqdefault.jpg";
+    }
+    return "";
+  }
+
+//#EndRegion
+
+//#region Public Api Calls
   static Future<List<dynamic>> searchMovies(String query,
       {int page = 1}) async {
     return _search("movie", query, page);
@@ -81,13 +90,12 @@ class MovieApi {
     return _search("tv", query, page);
   }
 
-  static Future<Map> getMovie(String id) async
-  {
-    return _get("movie",id);
+  static Future<Map> getMovie(String id) async {
+    return _get("movie", id);
   }
-  static Future<Map> getTv(String id) async
-  {
-    return _get("tv",id);
+
+  static Future<Map> getTv(String id) async {
+    return _get("tv", id);
   }
 
   static Future<List<dynamic>> getTrendMovies({int page = 1}) async {
@@ -115,9 +123,34 @@ class MovieApi {
       {int page = 1}) async {
     return _getRecentByGenre("tv", genre, page);
   }
-//Endregion
 
-  static Future<Map> _get(String type,String id) async {
+  static Future<Map> getMovieImages(String movID) async {
+    return _getImages("movie", movID);
+  }
+
+  static Future<Map> getTvImages(String movID) async {
+    return _getImages("tv", movID);
+  }
+
+  static Future<Map<String, List>> getMovieVideos(String movID) async {
+    return _getVideos("movie", movID);
+  }
+
+  static Future<Map<String, List>> getTvVideos(String movID) async {
+    return _getVideos("tv", movID);
+  }
+
+  static Future<Map> getMovieCast(String movID) async {
+    return _getCast("movie", movID);
+  }
+
+  static Future<Map> getTvCast(String movID) async {
+    return _getCast("tv", movID);
+  }
+//#Endregion
+
+//#region Private Api Calls
+  static Future<Map> _get(String type, String id) async {
     String url = "$baseUrl$type/$id?$apiKey";
     final resp = await http.get(Uri.parse(url));
     return jsonDecode(resp.body);
@@ -157,4 +190,36 @@ class MovieApi {
     }
     return filterMovs;
   }
+
+  static Future<Map> _getImages(String type, String movID) async {
+    String url = "$baseUrl$type/$movID/images?$apiKey";
+    var resp = await http.get(Uri.parse(url));
+    return jsonDecode(resp.body);
+  }
+
+  static Future<Map<String, List>> _getVideos(String type, String movID) async {
+    String url = "$baseUrl$type/$movID/videos?$apiKey";
+    Map<String, List> vidData = {
+      "Trailer": [],
+      "Teaser": [],
+      "Featurette": [],
+      "Behind the Scenes": []
+    };
+
+    var resp = await http.get(Uri.parse(url));
+    List rawData = jsonDecode(resp.body)["results"];
+
+    for (var i in rawData) {
+      vidData[i['type']]?.add(i);
+    }
+    return vidData;
+  }
+
+  static Future<Map> _getCast(String type, String movID) async {
+    String url = "$baseUrl$type/$movID/credits?$apiKey";
+
+    var resp = await http.get(Uri.parse(url));
+    return jsonDecode(resp.body);
+  }
+//#endregion
 }
