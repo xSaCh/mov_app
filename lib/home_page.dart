@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'search_page.dart';
+import 'widgets/horizontalMovieList.dart';
+import 'utils/api.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -9,27 +11,97 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int radioValue = 0;
-  Widget radioButton(String text, int index) {
-    return Container(
-      margin: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-          color: radioValue == index ? Colors.blueAccent : Colors.grey,
-          borderRadius: const BorderRadius.all(Radius.circular(4))),
-      child: TextButton(
-          onPressed: () {
-            setState(() {
-              radioValue = index;
-            });
-          },
-          child: Text(text, style: const TextStyle(color: Colors.white))),
-    );
+  // var trendMovies = [];
+  Map<Genre, List> genreMoviesDatas = {};
+  Map<String, List> movieDatas = {};
+
+  Future getGenreMovie(Genre genre) async {
+    var data = await MovieApi.getRecentMoviesByGenre(genre);
+    setState(() {
+      genreMoviesDatas[genre] = data;
+    });
+  }
+
+  Future getTrendMov() async {
+    var data = await MovieApi.getTrendMovies();
+    setState(() {
+      movieDatas["Trending Movies"] = data;
+    });
+  }
+
+  Future getTrendTv() async {
+    var data = await MovieApi.getTrendTV();
+    setState(() {
+      movieDatas["Trending Shows"] = data;
+    });
+  }
+
+  Future getPopMov() async {
+    var data = await MovieApi.getPopularMovies();
+    setState(() {
+      movieDatas["Popular Movies"] = data;
+    });
+  }
+
+  Future getPopTv() async {
+    var data = await MovieApi.getPopularTV();
+    setState(() {
+      movieDatas["Popular Shows"] = data;
+    });
+  }
+
+  @override
+  void initState() {
+    genreMoviesDatas[Genre.Action] = [];
+    genreMoviesDatas[Genre.Drama] = [];
+    genreMoviesDatas[Genre.Romance] = [];
+    genreMoviesDatas[Genre.Adventure] = [];
+    genreMoviesDatas[Genre.Science_Fiction] = [];
+
+    getTrendMov();
+    getTrendTv();
+    getPopMov();
+    getPopTv();
+
+    getGenreMovie(Genre.Action);
+    getGenreMovie(Genre.Drama);
+    getGenreMovie(Genre.Romance);
+    getGenreMovie(Genre.Adventure);
+    getGenreMovie(Genre.Science_Fiction);
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    int i = -1;
-    imageCache.clear();
+    List<Widget> cardsList = [];
+
+    for (String title in movieDatas.keys) {
+      //Trending Movies
+      cardsList.add(Container(
+          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 20),
+          )));
+      cardsList.add(movieDatas[title]!.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : HorizontalMovieList(imageData: movieDatas[title]!));
+    }
+
+    for (Genre genre in genreMoviesDatas.keys) {
+      // Title
+      cardsList.add(Container(
+          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Text(
+            genre.name,
+            style: const TextStyle(fontSize: 20),
+          )));
+      // Image List
+      cardsList.add(genreMoviesDatas[genre]!.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : HorizontalMovieList(imageData: genreMoviesDatas[genre]!));
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("MovieDB"),
@@ -48,126 +120,7 @@ class _HomePageState extends State<HomePage> {
       body: SingleChildScrollView(
           child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-              margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: const Text(
-                "Action",
-                style: TextStyle(fontSize: 20),
-              )),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-                itemCount: 5,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                itemBuilder: (BuildContext context, int index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    child: GestureDetector(
-                        onTap: () => debugPrint("Tap"),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                              width: 125,
-                              child: i != 1
-                                  ? Image.asset("images/${index % 10}.jpg",
-                                      fit: BoxFit.fitHeight)
-                                  : Image.network(
-                                      "https://cdn.pixabay.com/photo/2017/08/30/01/05/milky-way-2695569__340.jpg")),
-                        )),
-                  );
-                }),
-          ),
-          Container(
-              margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: const Text(
-                "Drama",
-                style: TextStyle(fontSize: 20),
-              )),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-                itemCount: 5,
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                itemBuilder: (BuildContext context, int index) {
-                  debugPrint("images/wall.jpg");
-                  i++;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    child: GestureDetector(
-                      onTap: () => debugPrint("Tap"),
-                      child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                              width: 125,
-                              child: Image.asset("images/${i % 10}.jpg",
-                                  fit: BoxFit.cover))),
-                    ),
-                  );
-                }),
-          ),
-          Container(
-              margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: const Text(
-                "Adventure",
-                style: TextStyle(fontSize: 20),
-              )),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-                itemCount: 5,
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                itemBuilder: (BuildContext context, int index) {
-                  debugPrint("images/wall.jpg");
-                  i++;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    child: GestureDetector(
-                      onTap: () => debugPrint("Tap"),
-                      child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                              width: 125,
-                              child: Image.asset("images/${i % 10}.jpg",
-                                  fit: BoxFit.cover))),
-                    ),
-                  );
-                }),
-          ),
-          Container(
-              margin: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              child: const Text(
-                "Science Friction",
-                style: TextStyle(fontSize: 20),
-              )),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-                itemCount: 5,
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                itemBuilder: (BuildContext context, int index) {
-                  debugPrint("images/wall.jpg");
-                  i++;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    child: GestureDetector(
-                      onTap: () => debugPrint("Tap"),
-                      child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                              width: 125,
-                              child: Image.asset("images/${i % 10}.jpg",
-                                  fit: BoxFit.cover))),
-                    ),
-                  );
-                }),
-          ),
-        ],
+        children: cardsList,
       )),
     );
   }

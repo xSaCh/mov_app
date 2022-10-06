@@ -81,6 +81,15 @@ class MovieApi {
     return _search("tv", query, page);
   }
 
+  static Future<Map> getMovie(String id) async
+  {
+    return _get("movie",id);
+  }
+  static Future<Map> getTv(String id) async
+  {
+    return _get("tv",id);
+  }
+
   static Future<List<dynamic>> getTrendMovies({int page = 1}) async {
     return _getTrend("movie", page);
   }
@@ -107,6 +116,12 @@ class MovieApi {
     return _getRecentByGenre("tv", genre, page);
   }
 //Endregion
+
+  static Future<Map> _get(String type,String id) async {
+    String url = "$baseUrl$type/$id?$apiKey";
+    final resp = await http.get(Uri.parse(url));
+    return jsonDecode(resp.body);
+  }
 
   static Future<List<dynamic>> _getTrend(String type, int page) async {
     String trendUrl = "${baseUrl}trending/$type/week?$apiKey&page=$page";
