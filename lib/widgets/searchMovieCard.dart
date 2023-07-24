@@ -1,16 +1,18 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
+import 'package:linux_test/models/film.dart';
 import '../utils/api.dart';
+import 'package:linux_test/models/common.dart';
 
 class SearchMovieCard extends StatelessWidget {
-  final Map searchData;
+  final ResultFilm searchData;
   const SearchMovieCard({super.key, required this.searchData});
 
   @override
   Widget build(BuildContext context) {
     String genres = "";
-    for (var i = 0; i < searchData["genre_ids"].length; i++) {
-      genres += "${searchData["genre_ids"][i]} ,";
+    for (var i = 0; i < searchData.genres.length; i++) {
+      genres += "${searchData.genres[i].name} ,";
     }
 
     return Row(
@@ -20,9 +22,15 @@ class SearchMovieCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8.0),
             child: SizedBox(
                 width: 80,
-                child: Image.network(MovieApi.getImageLink(
-                    searchData["poster_path"],
-                    width: ImageWidth.w92))),
+                child: searchData.posterPath != null
+                    ? Image.network(MovieApi.getImageLink(
+                        searchData.posterPath!,
+                        width: ImageWidth.w92))
+                    : Container(
+                        height: 120,
+                        color: Colors.grey.shade800,
+                        child:
+                            const Icon(Icons.hide_image_outlined, size: 50))),
           ),
           Flexible(
             child: Container(
@@ -32,19 +40,19 @@ class SearchMovieCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "${searchData["title"]}",
+                    "${searchData.title}",
                     style: const TextStyle(fontSize: 16),
                   ),
                   Padding(
                       padding: const EdgeInsets.only(top: 6.0),
                       child: Text(
-                        "${searchData["media_type"]} ${searchData["release_date"]}",
+                        "${searchData.type.name} ${searchData.releaseDate?.year}",
                         style:
                             const TextStyle(fontSize: 12, color: Colors.grey),
                       )),
                   Padding(
                       padding: const EdgeInsets.only(top: 6.0),
-                      child: Text("🌟️ ${searchData["vote_average"]}",
+                      child: Text("🌟️ ${searchData.voteAverage}",
                           style: const TextStyle(
                               fontSize: 12, color: Colors.grey))),
                   Padding(

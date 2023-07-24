@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-// import 'dart:async';
-// import 'dart:convert';
-// import 'package:http/http.dart' as http;
+import 'package:linux_test/models/film.dart';
+import 'package:linux_test/widgets/dataCard.dart';
 import 'utils/api.dart';
 import 'widgets/searchMovieCard.dart';
+import 'movie_detail_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -13,12 +13,14 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   var showData = [];
+  List<ResultFilm> showDataM = [];
   int trendPage = 1;
 
   Future<void> getMoreData() async {
     var d = await MovieApi.getTrendMovies(page: trendPage);
     setState(() {
       showData.addAll(d);
+      showDataM.addAll(d.map((e) => ResultFilm.fromJson(e)));
       trendPage++;
     });
   }
@@ -27,6 +29,7 @@ class _SearchPageState extends State<SearchPage> {
     var data = await MovieApi.getTrendMovies();
     setState(() {
       showData = data;
+      showDataM = data.map((e) => ResultFilm.fromJson(e)).toList();
       trendPage++;
     });
   }
@@ -45,19 +48,33 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Widget searchListWidget() {
-    if (showData.isEmpty) {
+    if (showDataM.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     } else {
       return ListView.builder(
           key: const PageStorageKey("searchListStorage"),
-          itemCount: showData.length + 1,
+          itemCount: showDataM.length + 1,
           controller: c,
           itemBuilder: (context, index) {
-            if (index < showData.length) {
-              debugPrint("${showData.length} $index");
+            if (index < showDataM.length) {
               return Padding(
-                  padding: const EdgeInsets.fromLTRB(8.0, 8.0, 0, 0),
-                  child: SearchMovieCard(searchData: showData[index]));
+                padding: const EdgeInsets.fromLTRB(8.0, 8.0, 0, 0),
+                child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: ((context) => MovieDetailPage(
+                              movieID: showDataM[index].id.toString()))));
+                    },
+                    onLongPress: () {
+                      debugPrint("DATA: ${showDataM[index].id}");
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return DataCard(showDataM[index]);
+                          });
+                    },
+                    child: SearchMovieCard(searchData: showDataM[index])),
+              );
             } else {
               debugPrint("END");
               return const Center(child: CircularProgressIndicator());
@@ -75,14 +92,23 @@ class _SearchPageState extends State<SearchPage> {
       ),
       body: Column(mainAxisSize: MainAxisSize.max, children: [
         TextField(
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: "Hello",
-              hintText: "HINT",
-            ),
-            onSubmitted: (String txt) async {
-              await MovieApi.searchMovies(txt);
-            }),
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: "Search Movie",
+            hintText: "Enter name to search movie",
+          ),
+          onChanged: (String txt) async {
+            var data = await MovieApi.search(txt);
+            setState(() {
+              showData = data;
+              showDataM = data.map((e) => ResultFilm.fromJson(e)).toList();
+
+              if (data.isNotEmpty) {
+                debugPrint(txt);
+              }
+            });
+          },
+        ),
         const SizedBox(height: 10),
         Expanded(child: searchListWidget())
       ]),

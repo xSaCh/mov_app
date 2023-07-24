@@ -3,67 +3,64 @@ import "models/common.dart";
 import 'models/film.dart';
 import "utils/api.dart";
 
-class MovieDetailPage extends StatefulWidget {
+class TvDetailPage extends StatefulWidget {
   final String movieID;
-  const MovieDetailPage({super.key, required this.movieID});
+  const TvDetailPage({super.key, required this.movieID});
 
   @override
-  State<MovieDetailPage> createState() => _MovieDetailPageState();
+  State<TvDetailPage> createState() => _TvDetailPageState();
 }
 
-class _MovieDetailPageState extends State<MovieDetailPage> {
+class _TvDetailPageState extends State<TvDetailPage> {
   // Future<Movie> movieData;
-  List<Map> movieImgData = [];
-  List<Map> movieVidData = [];
-  List<Map> movieCastData = [];
-  List recommendedMovies = [];
+  List<Map> tvImgData = [];
+  List<Map> tvVidData = [];
+  List<Map> tvCastData = [];
+  List<ResultFilm> recommendedTv = [];
 
-  Future<Movie> getMovieDetail() async {
-    var data = await MovieApi.getMovie(widget.movieID);
-    // setState(() {
-    //   movieData = Movie.fromJson(data);
-    // });
-    return Movie.fromJson(data);
+  Future<Tv> getTvDetail() async {
+    var data = await MovieApi.getTv(widget.movieID);
+    return Tv.fromJson(data);
   }
 
-  Future getRecommendedMovies() async {
-    var data = await MovieApi.getPopularMovies();
+  Future getRecommendedTv() async {
+    var data = await MovieApi.getTrendTV();
     setState(() {
-      recommendedMovies = data;
+      recommendedTv = data.map((e) => ResultFilm.fromJson(e)).toList();
     });
   }
 
   Future getImages() async {
-    var data = await MovieApi.getMovieImages(widget.movieID);
+    var data = await MovieApi.getTvImages(widget.movieID);
     List<Map> listData = [];
     listData.addAll(List<Map>.from(data["posters"]!));
     listData.addAll(List<Map>.from(data["backdrops"]!));
     setState(() {
-      movieImgData = listData;
+      tvImgData = listData;
     });
   }
 
   Future getVideos() async {
-    var data = await MovieApi.getMovieVideos(widget.movieID);
+    var data = await MovieApi.getTvVideos(widget.movieID);
 
     List<Map> listData = [];
     for (var k in data.keys) {
       listData.addAll(List<Map>.from(data[k]!));
     }
     setState(() {
-      movieVidData = listData;
+      tvVidData = listData;
     });
   }
 
   Future getCast() async {
-    var data = await MovieApi.getMovieCast(widget.movieID);
+    var data = await MovieApi.getTvCast(widget.movieID);
 
     List<Map> listData = [];
 
     listData.addAll(List<Map>.from(data["cast"]!));
     listData.addAll(List<Map>.from(data["crew"]!));
     setState(() {
-      movieCastData = listData;
+      tvCastData = listData;
     });
   }
 
@@ -71,18 +68,18 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
     String s = "";
     switch (date.month) {
       case DateTime.january:
-        s += "Jan";
+        s += "January";
         break;
       case DateTime.february:
-        s += "Feb";
+        s += "February";
         break;
 
       case DateTime.march:
-        s += "Mar";
+        s += "March";
         break;
 
       case DateTime.april:
-        s += "Apr";
+        s += "April";
         break;
 
       case DateTime.may:
@@ -90,28 +87,28 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
         break;
 
       case DateTime.june:
-        s += "Jun";
+        s += "June";
         break;
 
       case DateTime.july:
-        s += "Jul";
+        s += "July";
         break;
 
       case DateTime.august:
-        s += "Aug";
+        s += "August";
         break;
 
       case DateTime.september:
-        s += "Sept";
+        s += "September";
         break;
       case DateTime.october:
-        s += "Oct";
+        s += "October";
         break;
       case DateTime.november:
-        s += "Nov";
+        s += "November";
         break;
       case DateTime.december:
-        s += "Dec";
+        s += "December";
         break;
     }
 
@@ -121,15 +118,15 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
 
   @override
   void initState() {
-    getMovieDetail();
+    getTvDetail();
     getCast();
     getImages();
     getVideos();
-    getRecommendedMovies();
+    getRecommendedTv();
     super.initState();
   }
 
-  Widget movieInfoView(String title, String value) {
+  Widget tvInfoView(String title, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 3.0),
       child: Row(children: [
@@ -169,18 +166,18 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
     );
   }
 
-  Widget displayWidget(BuildContext context, Movie movieData) {
-    String runtime =
-        "${movieData.runtime ~/ 60}hr ${movieData.runtime % 60}min";
+  Widget displayWidget(BuildContext context, Tv tvData) {
+    // String runtime =
+    //     "${tvData.firstAirDate ~/ 60}hr ${tvData.runtime % 60}min";
 
     return Scaffold(
       body: SingleChildScrollView(
         child: SafeArea(
           child: Stack(children: [
             // Background Image
-            movieData.backdropPath != ""
+            tvData.backdropPath != ""
                 ? Image.network(
-                    MovieApi.getImageLink(movieData.backdropPath,
+                    MovieApi.getImageLink(tvData.backdropPath,
                         width: ImageWidth.w500),
                     width: MediaQuery.of(context).size.width,
                     height: 211,
@@ -207,7 +204,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                 ),
                 const SizedBox(height: 60),
                 Row(
-                  // crossAxisAlignment: CrossAxisAlignment.stretch,
+                  // crossAxisAlignment: CrossAxisAlignment.,
                   children: [
                     // Poster Image
                     Container(
@@ -222,9 +219,9 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                           ]),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: movieData.posterPath != ""
+                        child: tvData.posterPath != ""
                             ? Image.network(
-                                MovieApi.getImageLink(movieData.posterPath,
+                                MovieApi.getImageLink(tvData.posterPath,
                                     width: ImageWidth.w342),
                                 height: 150,
                                 width: 100,
@@ -237,29 +234,23 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                                     size: 50)),
                       ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          const SizedBox(height: 55),
-
-                          Text(movieData.title,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 2,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 20)),
-                          Text(
-                              "${getFormatedRelDate(movieData.releaseDate!)}  :  $runtime",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                  color: Colors.grey)),
-                          // const SizedBox(height: 15),
-                        ],
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(height: 75),
+                        Text(tvData.title,
+                            overflow: TextOverflow.clip,
+                            maxLines: 2,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20)),
+                        Text(
+                            "${tvData.firstAirDate!.year}  :  ${tvData.status.name}",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Colors.grey)),
+                      ],
                     )
                   ],
                 ),
@@ -277,7 +268,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                       overflow: TextOverflow.ellipsis,
                       maxLines: 5,
                       style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      movieData.summary ?? "Not Found",
+                      tvData.summary ?? "Not Found",
                     )),
                 //#endregion
 
@@ -291,7 +282,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                   height: 30,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: movieData.genres.length,
+                    itemCount: tvData.genres.length,
                     primary: false,
                     // shrinkWrap: true,
                     itemBuilder: ((context, index) {
@@ -299,7 +290,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                         padding: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: OutlinedButton(
                             onPressed: () {},
-                            child: Text(movieData.genres[index].name)),
+                            child: Text(tvData.genres[index].name)),
                       );
                     }),
                   ),
@@ -308,14 +299,14 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
 
                 //#region Fetured Cast
                 clickableTitle(
-                    "Fetured Cast", () => debugPrint("${movieData.id}")),
+                    "Fetured Cast", () => debugPrint("${tvData.id}")),
                 //TODO: Add Fetured Cast Page
                 Container(
                   padding: const EdgeInsets.fromLTRB(20, 0, 0, 0),
                   height: 35,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: movieCastData.length,
+                    itemCount: tvCastData.length,
                     primary: false,
                     // shrinkWrap: true,
                     itemBuilder: ((context, index) {
@@ -325,13 +316,13 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Text("${movieCastData[index]['name']}"),
-                              Text("${movieCastData[index]['name']}",
+                              Text("${tvCastData[index]['name']}",
                                   style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500)),
 
                               Text(
-                                  "${movieCastData[index]['known_for_department']}",
+                                  "${tvCastData[index]['known_for_department']}",
                                   style: const TextStyle(
                                       fontSize: 14, color: Colors.grey))
                             ],
@@ -348,23 +339,27 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
-                movieInfoView("Original Title", movieData.originalTitle),
-                movieInfoView("Status", movieData.status.name),
-                movieInfoView("Runtime", runtime),
+                tvInfoView("Original Title", tvData.originalTitle),
+                tvInfoView("Status", tvData.status.name),
+                tvInfoView(
+                    "First Air Date", getFormatedRelDate(tvData.firstAirDate!)),
+                tvInfoView(
+                    "Last Air Date", getFormatedRelDate(tvData.lastAirDate!)),
                 //TODO: Add api to get movie age rating
-                movieInfoView("Budget", "${movieData.budget}"),
-                movieInfoView("Revenue", "${movieData.revenue}"),
-                movieInfoView("Original language", movieData.originalLanguage),
+
+                // tvInfoView("Budget", "${tvData.}"),
+                // tvInfoView("Revenue", "${tvData.revenue}"),
+                // tvInfoView("Original language", tvData.),
                 //#endregion
 
                 //#region Trailer
-                clickableTitle("Trailer", () => debugPrint("${movieData.id}")),
+                clickableTitle("Trailer", () => debugPrint("${tvData.id}")),
                 //TODO: Add Trailer Page
                 SizedBox(
                   height: 130,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: movieVidData.length,
+                    itemCount: tvVidData.length,
                     primary: false,
                     itemBuilder: ((context, index) {
                       //TODO: Play Video Link on click
@@ -372,13 +367,13 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                         padding: const EdgeInsets.only(left: 20.0),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(8.0),
-                          onTap: () => debugPrint("${movieImgData[index]}"),
+                          onTap: () => debugPrint("${tvImgData[index]}"),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.0),
                             child: SizedBox(
                                 child: Image.network(
                                     MovieApi.getVideoThumbailLink(
-                                        movieVidData[index]),
+                                        tvVidData[index]),
                                     fit: BoxFit.cover)),
                           ),
                         ),
@@ -389,14 +384,14 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                 //#endregion
 
                 //#region Media
-                clickableTitle("Media", () => debugPrint("${movieData.id}")),
+                clickableTitle("Media", () => debugPrint("${tvData.id}")),
                 //TODO: Add Media Movie Page
 
                 SizedBox(
                   height: 170,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: movieImgData.length,
+                    itemCount: tvImgData.length,
                     primary: false,
                     // shrinkWrap: true,
                     itemBuilder: ((context, index) {
@@ -405,18 +400,17 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                         //TODO: show fullScreen on click
                         child: InkWell(
                           borderRadius: BorderRadius.circular(8.0),
-                          onTap: () => debugPrint("${movieImgData[index]}"),
+                          onTap: () => debugPrint("${tvImgData[index]}"),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.0),
                             child: SizedBox(
                                 child: Image.network(
                                     MovieApi.getImageLink(
-                                        movieImgData[index]["file_path"],
-                                        width: movieImgData[index]
-                                                    ['aspect_ratio'] <
-                                                1
-                                            ? ImageWidth.w154
-                                            : ImageWidth.w342),
+                                        tvImgData[index]["file_path"],
+                                        width:
+                                            tvImgData[index]['aspect_ratio'] < 1
+                                                ? ImageWidth.w154
+                                                : ImageWidth.w342),
                                     fit: BoxFit.cover)),
                           ),
                         ),
@@ -428,14 +422,14 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
 
                 //#region Recommended Movies
                 clickableTitle(
-                    "Recommended Movie", () => debugPrint("${movieData.id}")),
+                    "Recommended Movie", () => debugPrint("${tvData.id}")),
                 //TODO: Add Recommended Movie Page
                 SizedBox(
                     height: 170,
-                    child: recommendedMovies.isNotEmpty
+                    child: recommendedTv.isNotEmpty
                         ? ListView.builder(
                             scrollDirection: Axis.horizontal,
-                            itemCount: recommendedMovies.length,
+                            itemCount: recommendedTv.length,
                             primary: false,
                             itemBuilder: ((context, index) {
                               return Padding(
@@ -445,20 +439,18 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
                                   onTap: () {
                                     Navigator.of(context).push(
                                         MaterialPageRoute(
-                                            builder: (context) =>
-                                                MovieDetailPage(
-                                                    movieID:
-                                                        recommendedMovies[index]
-                                                                ["id"]
-                                                            .toString())));
+                                            builder: (context) => TvDetailPage(
+                                                movieID: recommendedTv[index]
+                                                    .id
+                                                    .toString())));
                                   },
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8.0),
                                     child: SizedBox(
                                         child: Image.network(
                                             MovieApi.getImageLink(
-                                                recommendedMovies[index]
-                                                    ["poster_path"],
+                                                recommendedTv[index]
+                                                    .posterPath!,
                                                 width: ImageWidth.w154),
                                             fit: BoxFit.cover)),
                                   ),
@@ -488,7 +480,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
         }
         return displayWidget(context, snapshot.data!);
       },
-      future: getMovieDetail(),
+      future: getTvDetail(),
     );
   }
 }

@@ -3,31 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
-enum ImageWidth { original, w92, w154, w185, w342, w500 }
-
-enum Genre {
-  Action,
-  Adventure,
-  Animation,
-  Comedy,
-  Crime,
-  Documentary,
-  Drama,
-  Family,
-  Fantasy,
-  History,
-  Horror,
-  Music,
-  Mystery,
-  Romance,
-  Science_Fiction,
-  TV_Movie,
-  Thriller,
-  War,
-  Western,
-  Invalid
-}
+import 'package:linux_test/models/common.dart';
 
 class MovieApi {
   static const String apiKey = "api_key=a3ca43df787ec6b692b7e1e2d53a65ec";
@@ -35,36 +11,8 @@ class MovieApi {
   static const String imageUrl = "https://image.tmdb.org/t/p/";
   static const String ytImgUrl = "https://img.youtube.com/vi/";
   static const String vimeoImgUrl = "https://vimeo.com/";
-  static const Map<int, Genre> genreList = {
-    28: Genre.Action,
-    12: Genre.Adventure,
-    16: Genre.Animation,
-    35: Genre.Comedy,
-    80: Genre.Crime,
-    99: Genre.Documentary,
-    18: Genre.Drama,
-    10751: Genre.Family,
-    14: Genre.Fantasy,
-    36: Genre.History,
-    27: Genre.Horror,
-    10402: Genre.Music,
-    9648: Genre.Mystery,
-    10749: Genre.Romance,
-    878: Genre.Science_Fiction,
-    10770: Genre.TV_Movie,
-    53: Genre.Thriller,
-    10752: Genre.War,
-    37: Genre.Western
-  };
 
-//#Region Utils
-  static Genre getGenreFromId(int id) {
-    return genreList[id] ?? Genre.Invalid;
-  }
-
-  static int getGenreId(Genre genre) {
-    return genreList.keys.firstWhere((k) => genreList[k] == genre);
-  }
+  //#region Utils
 
   static String getImageLink(String path,
       {ImageWidth width = ImageWidth.original}) {
@@ -77,8 +25,7 @@ class MovieApi {
     }
     return "";
   }
-
-//#EndRegion
+  //#endregion
 
 //#region Public Api Calls
   static Future<List<dynamic>> searchMovies(String query,
@@ -86,15 +33,19 @@ class MovieApi {
     return _search("movie", query, page);
   }
 
+  static Future<List<dynamic>> search(String query, {int page = 1}) async {
+    return _search("multi", query, page);
+  }
+
   static Future<List<dynamic>> searchTV(String query, {int page = 1}) async {
     return _search("tv", query, page);
   }
 
-  static Future<Map> getMovie(String id) async {
+  static Future<Map<String, dynamic>> getMovie(String id) async {
     return _get("movie", id);
   }
 
-  static Future<Map> getTv(String id) async {
+  static Future<Map<String, dynamic>> getTv(String id) async {
     return _get("tv", id);
   }
 
@@ -150,8 +101,8 @@ class MovieApi {
 //#Endregion
 
 //#region Private Api Calls
-  static Future<Map> _get(String type, String id) async {
-    String url = "$baseUrl$type/$id?$apiKey";
+  static Future<Map<String, dynamic>> _get(String type, String id) async {
+    String url = "$baseUrl$type/$id?$apiKey&append_to_response=videos,images";
     final resp = await http.get(Uri.parse(url));
     return jsonDecode(resp.body);
   }
@@ -164,8 +115,8 @@ class MovieApi {
 
   static Future<List<dynamic>> _search(
       String type, String query, int page) async {
-    final resp = await http
-        .get(Uri.parse("${baseUrl}search/$type?$apiKey$query&page=$page"));
+    final resp = await http.get(
+        Uri.parse("${baseUrl}search/$type?$apiKey&query=$query&page=$page"));
     return jsonDecode(resp.body)["results"];
   }
 
@@ -179,7 +130,7 @@ class MovieApi {
       String type, Genre genre, int page) async {
     List filterMovs = [];
 
-    while (filterMovs.length < 20) {
+    while (filterMovs.length < 20 && page < 100) {
       String url = "${baseUrl}discover/$type?$apiKey&page=$page";
       var resp = await http.get(Uri.parse(url));
       page++;
